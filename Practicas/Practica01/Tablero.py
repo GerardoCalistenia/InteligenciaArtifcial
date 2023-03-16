@@ -53,14 +53,15 @@ class Puzzle8:
         return self.profundidad
 
     def __lt__(self, other):
-        return self.heuristica_manhattan() + self.costo() < other.heuristica_manhattan() + other.costo()
+        return self.heuristica_manhattan() * self.heuristica_peso + self.costo() < other.heuristica_manhattan() * other.heuristica_peso + other.costo()
 
 
     def resolver(self):
         frontera = [self]
+        heapq.heapify(frontera) # convierte la lista de frontera en una cola de prioridad
         visitados = set()
         while frontera:
-            actual = frontera.pop(0)
+            actual = heapq.heappop(frontera) # obtiene el nodo con la menor prioridad
             visitados.add(str(actual.estado_inicial))
             if actual.es_estado_final():
                 camino = []
@@ -72,37 +73,7 @@ class Puzzle8:
             for movimiento in actual.movimientos_validos():
                 hijo = actual.mover(movimiento)
                 if str(hijo.estado_inicial) not in visitados:
-                    frontera.append(hijo)
-            frontera.sort()
-        return None
-
-    def resolver_con_pesos(self, pmax):
-        abiertos = []
-        heapq.heappush(abiertos, self)
-        cerrados = set()
-        pesos = {self: self.heuristica_manhattan()}
-
-        while abiertos:
-            actual = heapq.heappop(abiertos)
-
-            if actual.es_estado_final():
-                return actual
-
-            cerrados.add(actual)
-
-            if actual.profundidad < pmax:
-                for movimiento in actual.movimientos_validos():
-                    siguiente = actual.mover(movimiento)
-
-                    if siguiente in cerrados:
-                        continue
-
-                    nuevo_costo = actual.costo() + 1
-                    if siguiente not in pesos or nuevo_costo < siguiente.costo():
-                        siguiente.profundidad = actual.profundidad + 1
-                        heapq.heappush(abiertos, siguiente)
-                        pesos[siguiente] = siguiente.heuristica_manhattan()
-
+                    heapq.heappush(frontera, hijo) # inserta el nodo hijo en la cola de prioridad
         return None
 
 def obtener_cadena_movimiento(movimiento):
@@ -119,6 +90,10 @@ def obtener_cadena_movimiento(movimiento):
 
 
 puzzle = Puzzle8([[5, 4, 2], [3, 1, 7], ['e', 6, 8]])
+print("Estado inicial:\n")
+for fila in puzzle.estado_inicial:
+    print(fila)
+print()
 solucion = puzzle.resolver()
 if solucion is None:
     print("No se encontró solución")
@@ -131,5 +106,3 @@ else:
         for fila in actual.estado_inicial:
             print(fila)
         print()
-
-print(solucion)
